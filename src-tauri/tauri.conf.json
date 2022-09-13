@@ -11,7 +11,10 @@
   },
   "tauri": {
     "allowlist": {
-      "all": true
+      "all": true,
+      "window": {
+        "startDragging": true
+      }
     },
     "bundle": {
       "active": true,
@@ -55,11 +58,12 @@
     "windows": [
       {
         "fullscreen": false,
-        "height": 200,
-        "resizable": true,
-        "title": "brisk",
-        "width": 500,
-        "decorations": true
+        "center": true,
+        "y": 200,
+        "height": 56,
+        "width": 400,
+        "decorations": false,
+        "transparent": true
       }
     ]
   }
