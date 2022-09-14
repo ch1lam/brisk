@@ -1,13 +1,23 @@
-import { useState } from "react";
+import { useState, KeyboardEvent } from "react";
 import reactLogo from "./assets/react.svg";
 import { invoke } from "@tauri-apps/api/tauri";
 import { appWindow } from "@tauri-apps/api/window";
 import styled from "@emotion/styled";
 
 function App() {
+  const handleEnter = (e: KeyboardEvent) => {
+    if (e.key === "Enter") {
+      alert("hello");
+    }
+  };
+
   return (
     <Container>
-      <SearchBox id="greet-input" placeholder="Brisk..." />
+      <SearchBox
+        id="greet-input"
+        placeholder="Brisk..."
+        onKeyDown={handleEnter}
+      />
     </Container>
   );
 }
