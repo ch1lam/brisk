@@ -3,59 +3,64 @@
     windows_subsystem = "windows"
 )]
 
-use tauri::Manager;
+use std::fs::OpenOptions;
+use std::io::prelude::*;
+use std::process;
+
+use tauri::{AppHandle, Manager};
 use tauri::{CustomMenuItem, SystemTray, SystemTrayEvent, SystemTrayMenu};
 
+#[tauri::command]
+fn evoke_main_command(window: tauri::Window) {
+    println!("I was invoked from JS!");
+    let brisk_window = window.get_window("brisk_main").unwrap();
+    brisk_window.show().unwrap();
+    // TODO 聚焦到窗口
+    brisk_window.set_focus().unwrap();
+}
+
+#[tauri::command]
+fn add_task(content: String) {
+    let mut file = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open("../tasks.txt")
+        .expect("Error while opening the tasks file");
+    writeln!(file, "{}", content).expect("Error while writing in the tasks file");
+}
+
+fn make_tray() -> SystemTray {
+    let menu = SystemTrayMenu::new()
+        .add_item(CustomMenuItem::new("toggle".to_string(), "Hide"))
+        .add_item(CustomMenuItem::new("quit".to_string(), "Quit"));
+    return SystemTray::new().with_menu(menu);
+}
+
+fn handle_tray_event(app: &AppHandle, event: SystemTrayEvent) {
+    if let SystemTrayEvent::MenuItemClick { id, .. } = event {
+        if id.as_str() == "quit" {
+            process::exit(0);
+        }
+        if id.as_str() == "toggle" {
+            let window = app.get_window("brisk_main").unwrap();
+            let menu_item = app.tray_handle().get_item("toggle");
+            if window.is_visible().unwrap() {
+                window.hide();
+                menu_item.set_title("Show");
+            } else {
+                window.show();
+                window.center();
+                menu_item.set_title("Hide");
+            }
+        }
+    }
+}
 
 fn main() {
-    let quit = CustomMenuItem::new("quit".to_string(), "Quit");
-    let hide = CustomMenuItem::new("hide".to_string(), "Hide");
-
-    let tray_menu = SystemTrayMenu::new()
-        .add_item(quit)
-        .add_native_item(tauri::SystemTrayMenuItem::Separator)
-        .add_item(hide);
-    let system_tray = SystemTray::new().with_menu(tray_menu);
-
     tauri::Builder::default()
-        .system_tray(system_tray)
-        .on_system_tray_event(|app, event| match event {
-            SystemTrayEvent::LeftClick {
-                position: _,
-                size: _,
-                ..
-            } => {
-                println!("system tray received a left click");
-            }
-            SystemTrayEvent::RightClick {
-                position: _,
-                size: _,
-                ..
-            } => {
-                println!("system tray received a right click");
-            }
-            SystemTrayEvent::DoubleClick {
-                position: _,
-                size: _,
-                ..
-            } => {
-                println!("system tray received a double click");
-            }
-            SystemTrayEvent::MenuItemClick { id, .. } => {
-                let item_handle = app.tray_handle().get_item(&id);
-                match id.as_str() {
-                    "quit" => {
-                        std::process::exit(0);
-                    }
-                    "hide" => {
-                        let window = app.get_window("main").unwrap();
-                        window.hide().unwrap();
-                    }
-                    _ => {}
-                }
-            }
-            _ => {}
-        })
+        .system_tray(make_tray())
+        .on_system_tray_event(handle_tray_event)
+        .invoke_handler(tauri::generate_handler![evoke_main_command])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

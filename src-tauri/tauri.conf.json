@@ -14,7 +14,11 @@
       "all": true,
       "window": {
         "startDragging": true
+      },
+      "globalShortcut": {
+        "all": true
       }
+
     },
     "bundle": {
       "active": true,
@@ -65,10 +69,11 @@
         "center": true,
         "y": 200,
         "height": 56,
-        "width": 400,
+        "width": 800,
         "decorations": false,
         "transparent": true,
-        "skipTaskbar": true
+        "skipTaskbar": true,
+        "label": "brisk_main"
       }
     ]
   }
